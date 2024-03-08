@@ -8,6 +8,13 @@ class Screen():
         self._width = 1280
         self._height = 720
 
+        self._x1 = -1
+        self._y1 = -1
+        self._x2 = -1
+        self._y2 = -1
+
+        self._clicked = -1
+
         self.root = tk.Tk()
         self.menu = tk.Menu(self.root)
         self.canvas = tk.Canvas()
@@ -39,25 +46,27 @@ class Screen():
         _canvas.bind('<Button-1>', self.on_canvas_click)
 
     def build_menu_transf_geo(self):
-        _menu = tk.Menu(self.menu, tearoff=0)
-        _menu.add_command(label="Translacao",
-                          command=self.on_translacao_click)
-        _menu.add_command(label="Rotacao",
-                          command=self.on_rotacao_click)
-        _menu.add_command(label="Escala",
-                          command=self.on_escala_click)
+        transf_menu = tk.Menu(self.menu, tearoff=0)
+        transf_menu.add_command(label="Translacao",
+                                command=self.on_translacao_click)
+        transf_menu.add_command(label="Rotacao",
+                                command=self.on_rotacao_click)
+        transf_menu.add_command(label="Escala",
+                                command=self.on_escala_click)
 
-        _menu.add_command(label="Reflexoes",
-                          command=self.on_reflexoes_click)
+        transf_menu.add_command(label="Reflexoes",
+                                command=self.on_reflexoes_click)
 
         self.menu.add_cascade(label="Transformacoes Geometricas 2D",
-                              menu=_menu)
+                              menu=transf_menu)
 
         self.root.config(menu=self.menu)
 
     def build_menu_rasterizacao(self):
         rast_menu = tk.Menu(self.menu, tearoff=0)
-        rast_menu.add_command(label="Retas", command=self.on_retas_click)
+        rast_menu.add_command(label="DDA", command=self.on_dda_click)
+        rast_menu.add_command(
+            label="Bresenham", command=self.on_bresenham_click)
         rast_menu.add_command(label="Circunferencia",
                               command=self.on_circunferencia_click)
 
@@ -67,9 +76,9 @@ class Screen():
 
     def build_menu_recorte(self):
         rec_menu = tk.Menu(self.menu, tearoff=0)
-        rec_menu.add_command(label="Cohen-Sutherland", 
+        rec_menu.add_command(label="Cohen-Sutherland",
                              command=self.on_cohen_sutherland_click)
-        rec_menu.add_command(label="Liang-Barsky", 
+        rec_menu.add_command(label="Liang-Barsky",
                              command=self.on_liang_barsky_click)
 
         self.menu.add_cascade(label="Recorte", menu=rec_menu)
@@ -94,7 +103,14 @@ class Screen():
         value = self._popup_menu()
         print(f"Reflexoes : {value}")
 
-    def on_retas_click(self):
+    def on_dda_click(self):
+        if self._x1 >= 0 and self._x2 >=0 :
+            self._DDA(self._x1, self._y1, self._x2, self._y2)
+        else :
+            print("Selecione 02 pontos no Canvas")
+
+
+    def on_bresenham_click(self):
         pass
 
     def on_circunferencia_click(self):
@@ -107,14 +123,46 @@ class Screen():
         pass
 
     def on_canvas_click(self, event):
+        self._clicked += 1
+
         x, y = event.x, event.y
-        print(f"Mouse clicked at coordinates: ({x}, {y})")
+
+        if self._clicked % 2:
+            self._x1 = x
+            self._y1 = y
+        else:
+            self._x2 = x
+            self._y2 = y
 
         self.canvas.create_rectangle(x, y, x+1, y+1)
 
     def _popup_menu(self):
         return simpledialog.askstring("Input", "Valor :")
 
+    def _DDA(self, x1, y1, x2, y2):
+        dx = x2 - x1
+        dy = y2 - y1
 
-screen = Screen()
-screen.run()
+        if abs(dx) > abs(dy):
+            passos = abs(dx)
+        else:
+            passos = abs(dy)
+
+        x_incr = dx / passos
+        y_incr = dy / passos
+
+        x = x1
+        y = y1
+
+        self.canvas.create_rectangle(x, y, x+1, y+1)
+
+        for _ in range(passos):
+            x += x_incr
+            y += y_incr
+
+            self.canvas.create_rectangle(x, y, x+1, y+1)
+
+
+if __name__ == "__main__":
+    screen = Screen()
+    screen.run()
