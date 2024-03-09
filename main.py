@@ -104,14 +104,16 @@ class Screen():
         print(f"Reflexoes : {value}")
 
     def on_dda_click(self):
-        if self._x1 >= 0 and self._x2 >=0 :
+        if self._x1 >= 0 and self._x2 >= 0:
             self._DDA(self._x1, self._y1, self._x2, self._y2)
-        else :
+        else:
             print("Selecione 02 pontos no Canvas")
 
-
     def on_bresenham_click(self):
-        pass
+        if self._x1 >= 0 and self._x2 >= 0:
+            self._bresenham(self._x1, self._y1, self._x2, self._y2)
+        else:
+            print("Selecione 02 pontos no Canvas")
 
     def on_circunferencia_click(self):
         pass
@@ -161,6 +163,57 @@ class Screen():
             y += y_incr
 
             self.canvas.create_rectangle(x, y, x+1, y+1)
+
+    def _bresenham(self, x1, y1, x2, y2):
+        dx = x2 - x1
+        dy = y2 - y1
+
+        if (dx >= 0):
+            incrx = 1
+        else:
+            incrx = -1
+            dx = - dx
+
+        if (dy >= 0):
+            incry = 1
+        else:
+            incry = -1
+            dy = -dy
+
+        x = x1
+        y = y1
+
+        self.canvas.create_rectangle(x, y, x+1, y+1)
+
+        if (dy < dx):
+            p = 2*dy - dx
+            c1 = 2 * dy
+            c2 = 2*(dy-dx)
+
+            for _ in range(dx):
+                x += incrx
+                if (p < 0):
+                    p += c1
+                else:
+                    y += incry
+                    p += c2
+
+                self.canvas.create_rectangle(x, y, x+1, y+1)
+        else:
+            p = 2*dx - dy
+            c1 = 2*dx
+            c2 = 2*(dx - dy)
+
+            for _ in range(dy):
+                y += incry
+
+                if (p < 0):
+                    p += c1
+                else:
+                    x += incrx
+                    p += c2
+
+                self.canvas.create_rectangle(x, y, x+1, y+1)
 
 
 if __name__ == "__main__":
