@@ -1,5 +1,8 @@
 import tkinter as tk
-from tkinter import simpledialog
+from tkinter import simpledialog, messagebox
+
+from utils import DDA, bresenham, draw_pixel, circ_bresenham
+from utils import translacao
 
 
 class Screen():
@@ -12,8 +15,8 @@ class Screen():
         self._y1 = -1
         self._x2 = -1
         self._y2 = -1
-
-        self._clicked = -1
+        self._clicked = 0
+        self._count_clk = self._clicked % 2
 
         self.root = tk.Tk()
         self.menu = tk.Menu(self.root)
@@ -24,6 +27,7 @@ class Screen():
 
     def run(self):
         self.build_canvas()
+        self.build_clear_button()
         self.build_menu_transf_geo()
         self.build_menu_rasterizacao()
         self.build_menu_recorte()
@@ -53,7 +57,6 @@ class Screen():
                                 command=self.on_rotacao_click)
         transf_menu.add_command(label="Escala",
                                 command=self.on_escala_click)
-
         transf_menu.add_command(label="Reflexoes",
                                 command=self.on_reflexoes_click)
 
@@ -65,13 +68,12 @@ class Screen():
     def build_menu_rasterizacao(self):
         rast_menu = tk.Menu(self.menu, tearoff=0)
         rast_menu.add_command(label="DDA", command=self.on_dda_click)
-        rast_menu.add_command(
-            label="Bresenham", command=self.on_bresenham_click)
-        rast_menu.add_command(label="Circunferencia",
+        rast_menu.add_command(label="Bresenham",
+                              command=self.on_bresenham_click)
+        rast_menu.add_command(label="Circunferencia - Bresenham",
                               command=self.on_circunferencia_click)
 
         self.menu.add_cascade(label="Rasterizacao", menu=rast_menu)
-
         self.root.config(menu=self.menu)
 
     def build_menu_recorte(self):
@@ -85,11 +87,18 @@ class Screen():
 
         self.root.config(menu=self.menu)
 
+    def build_clear_button(self):
+        self.clear_button = tk.Button(self.root,
+                                      text="Clear",
+                                      command=self.on_clear_button_click)
+        self.clear_button.pack(side=tk.BOTTOM)
+
     # HANDLERS
 
     def on_translacao_click(self):
-        value = self._popup_menu()
-        print(f"Translacao : {value}")
+        tx, ty = self._popup_menu_vector()
+        items = self.canvas.find_all()
+        translacao(self, items, tx, ty)
 
     def on_rotacao_click(self):
         value = self._popup_menu()
@@ -105,18 +114,25 @@ class Screen():
 
     def on_dda_click(self):
         if self._x1 >= 0 and self._x2 >= 0:
-            self._DDA(self._x1, self._y1, self._x2, self._y2)
+            DDA(self, self._x1, self._y1, self._x2, self._y2)
         else:
             print("Selecione 02 pontos no Canvas")
 
     def on_bresenham_click(self):
         if self._x1 >= 0 and self._x2 >= 0:
-            self._bresenham(self._x1, self._y1, self._x2, self._y2)
+            bresenham(self, self._x1, self._y1, self._x2, self._y2)
         else:
             print("Selecione 02 pontos no Canvas")
 
     def on_circunferencia_click(self):
-        pass
+
+        r = self._popup_menu_int("Valor do Raio :")
+
+        if self._count_clk:
+            circ_bresenham(self, self._x1, self._y1, r)
+        else:
+            circ_bresenham(self, self._x2, self._y2, r)
+        self.canvas.delete(f"rect{self._clicked % 2}")
 
     def on_cohen_sutherland_click(self):
         pass
@@ -126,94 +142,47 @@ class Screen():
 
     def on_canvas_click(self, event):
         self._clicked += 1
-
         x, y = event.x, event.y
+        print(f"Mouse clicked at ({x},{y})")
 
-        if self._clicked % 2:
+        self._count_clk = self._clicked % 2
+
+        _tag = f"rect{self._count_clk}"
+
+        if self._count_clk:
+            if (self._x1 != -1):
+                self.canvas.delete(_tag)
             self._x1 = x
             self._y1 = y
         else:
+            if (self._x2 != -1):
+                self.canvas.delete(_tag)
             self._x2 = x
             self._y2 = y
 
-        self.canvas.create_rectangle(x, y, x+1, y+1)
+        draw_pixel(self, x, y, tags=_tag)
 
-    def _popup_menu(self):
-        return simpledialog.askstring("Input", "Valor :")
+    def on_clear_button_click(self):
+        self.canvas.delete("all")
 
-    def _DDA(self, x1, y1, x2, y2):
-        dx = x2 - x1
-        dy = y2 - y1
+    def _popup_menu(self, title="Valor :"):
+        return simpledialog.askstring("Input", title)
 
-        if abs(dx) > abs(dy):
-            passos = abs(dx)
-        else:
-            passos = abs(dy)
+    def _popup_menu_int(self, title="Valor :"):
+        return simpledialog.askinteger("Input", title)
 
-        x_incr = dx / passos
-        y_incr = dy / passos
+    def _popup_menu_vector(self, title="Translation Vector"):
+        input_str = simpledialog.askstring("Input", f"{title} X, Y:")
+        values = input_str.split(',')
 
-        x = x1
-        y = y1
+        tx = 20
+        ty = 20
 
-        self.canvas.create_rectangle(x, y, x+1, y+1)
+        if len(values) == 2:
+            tx = int(values[0].strip())
+            ty = int(values[1].strip())
 
-        for _ in range(passos):
-            x += x_incr
-            y += y_incr
-
-            self.canvas.create_rectangle(x, y, x+1, y+1)
-
-    def _bresenham(self, x1, y1, x2, y2):
-        dx = x2 - x1
-        dy = y2 - y1
-
-        if (dx >= 0):
-            incrx = 1
-        else:
-            incrx = -1
-            dx = - dx
-
-        if (dy >= 0):
-            incry = 1
-        else:
-            incry = -1
-            dy = -dy
-
-        x = x1
-        y = y1
-
-        self.canvas.create_rectangle(x, y, x+1, y+1)
-
-        if (dy < dx):
-            p = 2*dy - dx
-            c1 = 2 * dy
-            c2 = 2*(dy-dx)
-
-            for _ in range(dx):
-                x += incrx
-                if (p < 0):
-                    p += c1
-                else:
-                    y += incry
-                    p += c2
-
-                self.canvas.create_rectangle(x, y, x+1, y+1)
-        else:
-            p = 2*dx - dy
-            c1 = 2*dx
-            c2 = 2*(dx - dy)
-
-            for _ in range(dy):
-                y += incry
-
-                if (p < 0):
-                    p += c1
-                else:
-                    x += incrx
-                    p += c2
-
-                self.canvas.create_rectangle(x, y, x+1, y+1)
+        return tx, ty
 
 
 if __name__ == "__main__":
