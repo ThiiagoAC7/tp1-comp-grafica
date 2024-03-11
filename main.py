@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import simpledialog, messagebox
 
 from utils import DDA, bresenham, draw_pixel, circ_bresenham
-from utils import translacao
+from utils import translacao, escala, rotacao, reflexao
 
 
 class Screen():
@@ -11,10 +11,10 @@ class Screen():
         self._width = 1280
         self._height = 720
 
-        self._x1 = -1
-        self._y1 = -1
-        self._x2 = -1
-        self._y2 = -1
+        self._x1 = None 
+        self._y1 = None
+        self._x2 = None
+        self._y2 = None
         self._clicked = 0
         self._count_clk = self._clicked % 2
 
@@ -27,6 +27,7 @@ class Screen():
 
     def run(self):
         self.build_canvas()
+        self.build_labels()
         self.build_clear_button()
         self.build_menu_transf_geo()
         self.build_menu_rasterizacao()
@@ -41,13 +42,38 @@ class Screen():
         center_x = (self._width - cv_width) // 2
         center_y = (self._height - cv_height) // 2
 
-        _canvas = tk.Canvas(self.root, width=cv_width,
-                            height=cv_height, bg="light grey")
+        self.canvas = tk.Canvas(self.root, width=cv_width,
+                                height=cv_height, bg="light grey")
 
-        self.canvas = _canvas
+        self.canvas.bind('<Button-1>', self.on_canvas_click)
+        self.canvas.place(x=center_x, y=center_y)
 
-        _canvas.place(x=center_x, y=center_y)
-        _canvas.bind('<Button-1>', self.on_canvas_click)
+        v_scrollbar = tk.Scrollbar(self.root, orient=tk.VERTICAL, command=self.canvas.yview)
+        v_scrollbar.place(x=center_x + cv_width, y=center_y, height=cv_height)
+
+        h_scrollbar = tk.Scrollbar(self.root, orient=tk.HORIZONTAL, command=self.canvas.xview)
+        h_scrollbar.place(x=center_x, y=center_y + cv_height, width=cv_width)
+
+        self.canvas.config(scrollregion=(-800, -600, 800, 600),
+                           yscrollcommand=v_scrollbar.set,
+                           xscrollcommand=h_scrollbar.set)
+
+
+    def build_labels(self):
+
+        center_y = self._height / 2
+
+        font_style = ("Arial", 13)
+
+        self.label_x1 = tk.Label(self.root, 
+                                 text=f"x1, y1: ({self._x1}, {self._y1})",
+                                 font=font_style)
+        self.label_x1.place(x=10, y=center_y-10)
+        self.label_x2 = tk.Label(self.root,
+                                 text=f"x2, y2: ({self._x1}, {self._y1})",
+                                 font=font_style)
+        self.label_x2.place(x=10, y=center_y + 20)
+
 
     def build_menu_transf_geo(self):
         transf_menu = tk.Menu(self.menu, tearoff=0)
@@ -90,49 +116,59 @@ class Screen():
     def build_clear_button(self):
         self.clear_button = tk.Button(self.root,
                                       text="Clear",
+                                      font=("Arial",13),
                                       command=self.on_clear_button_click)
         self.clear_button.pack(side=tk.BOTTOM)
 
     # HANDLERS
 
     def on_translacao_click(self):
-        tx, ty = self._popup_menu_vector()
-        items = self.canvas.find_all()
-        translacao(self, items, tx, ty)
+        tx, ty = self._popup_menu_vector("Vetor de Translacao, ")
+        if tx and ty:
+            items = self.canvas.find_all()
+            translacao(self, items, tx, ty)
 
     def on_rotacao_click(self):
-        value = self._popup_menu()
-        print(f"Rotacao : {value}")
+        theta = self._popup_menu_int("Valor do Angulo theta: ")
+        if theta:
+            items = self.canvas.find_all()
+            rotacao(self, items, theta)
 
     def on_escala_click(self):
-        value = self._popup_menu()
-        print(f"Escala : {value}")
+        sx, sy = self._popup_menu_vector("Constantes de Escala, ")
+        if sx and sy:
+            items = self.canvas.find_all()
+            escala(self, items, sx, sy)
 
     def on_reflexoes_click(self):
-        value = self._popup_menu()
-        print(f"Reflexoes : {value}")
+        ref_type = self._popup_menu("Reflexao X, Y, XY:")
+        if ref_type  in ["X", "Y", "XY"]:
+            items = self.canvas.find_all()
+            reflexao(self,items,ref_type)
 
     def on_dda_click(self):
-        if self._x1 >= 0 and self._x2 >= 0:
+        if self._x1 != None and self._x2 != None:
             DDA(self, self._x1, self._y1, self._x2, self._y2)
         else:
-            print("Selecione 02 pontos no Canvas")
+            self._popup_warning("Selecione 02 pontos no Canvas")
 
     def on_bresenham_click(self):
-        if self._x1 >= 0 and self._x2 >= 0:
+        if self._x1 != None and self._x2 != None:
             bresenham(self, self._x1, self._y1, self._x2, self._y2)
         else:
-            print("Selecione 02 pontos no Canvas")
+            self._popup_warning("Selecione 02 pontos no Canvas")
 
     def on_circunferencia_click(self):
-
-        r = self._popup_menu_int("Valor do Raio :")
-
-        if self._count_clk:
-            circ_bresenham(self, self._x1, self._y1, r)
+        if self._count_clk == 0:
+            self._popup_warning("Selecione um ponto no canvas!")
         else:
-            circ_bresenham(self, self._x2, self._y2, r)
-        self.canvas.delete(f"rect{self._clicked % 2}")
+            r = self._popup_menu_int("Valor do Raio :")
+
+            if self._count_clk:
+                circ_bresenham(self, self._x1, self._y1, r)
+            else:
+                circ_bresenham(self, self._x2, self._y2, r)
+            self.canvas.delete(f"rect{self._clicked % 2}")
 
     def on_cohen_sutherland_click(self):
         pass
@@ -142,8 +178,9 @@ class Screen():
 
     def on_canvas_click(self, event):
         self._clicked += 1
-        x, y = event.x, event.y
-        print(f"Mouse clicked at ({x},{y})")
+
+        x = self.canvas.canvasx(event.x)
+        y = self.canvas.canvasy(event.y)
 
         self._count_clk = self._clicked % 2
 
@@ -161,8 +198,16 @@ class Screen():
             self._y2 = y
 
         draw_pixel(self, x, y, tags=_tag)
+        self._update_labels()
 
     def on_clear_button_click(self):
+        self._x1 = None 
+        self._y1 = None
+        self._x2 = None
+        self._y2 = None
+        self._clicked = 0
+        self._count_clk = self._clicked % 2
+        self._update_labels()
         self.canvas.delete("all")
 
     def _popup_menu(self, title="Valor :"):
@@ -171,19 +216,28 @@ class Screen():
     def _popup_menu_int(self, title="Valor :"):
         return simpledialog.askinteger("Input", title)
 
-    def _popup_menu_vector(self, title="Translation Vector"):
-        input_str = simpledialog.askstring("Input", f"{title} X, Y:")
+    def _popup_menu_vector(self, title=""):
+        input_str = str(simpledialog.askstring("Input", f"{title} X, Y:"))
+
+        if input_str == "":
+            self._popup_warning("Digite um valor")
+
         values = input_str.split(',')
 
-        tx = 20
-        ty = 20
+        tx = ty = None
 
         if len(values) == 2:
-            tx = int(values[0].strip())
-            ty = int(values[1].strip())
+            tx = float(values[0].strip())
+            ty = float(values[1].strip())
 
         return tx, ty
 
+    def _popup_warning(self, title=""):
+        messagebox.showwarning("Warning", title)
+
+    def _update_labels(self):
+        self.label_x1.config(text=f"x1, y1: ({self._x1}, {self._y1})")
+        self.label_x2.config(text=f"x2, y2: ({self._x2}, {self._y2})")
 
 if __name__ == "__main__":
     screen = Screen()
