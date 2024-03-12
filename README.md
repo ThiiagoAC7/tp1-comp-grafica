@@ -4,4 +4,13 @@ Thiago Amado Costa
 
 #### TODO
 
-- 2 C -> Recorte ...
+- 2 C -> Liang-Barsky 
+- doc
+
+
+## Documentação :
+
+- como está organizado
+- como executa o codigo,
+
+

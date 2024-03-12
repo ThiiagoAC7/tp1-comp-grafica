@@ -4,6 +4,7 @@ import math
 def draw_pixel(screen, x, y, tags="default"):
     screen.canvas.create_rectangle(x, y, x+1, y+1, tags=tags)
 
+
 def DDA(screen, x1, y1, x2, y2):
     dx = int(x2 - x1)
     dy = int(y2 - y1)
@@ -181,3 +182,63 @@ def reflexao(screen, items, ref_type):
             new_coords = [-x1, -y1, -x2, -y2]
 
         screen.canvas.coords(item, *new_coords)
+
+
+def cohen_sutherland(screen, xmin, ymin, xmax, ymax, x1, y1, x2, y2):
+
+    def _region_code(x, y):
+        code = 0
+
+        if (x < xmin): # esq
+            code += 1
+
+        if (x > xmax): # dir
+            code += 2
+
+        if (y < ymin): # baixo 
+            code += 4
+
+        if (y > ymax): # cima
+            code += 8
+
+        return code
+
+    accept = done = False
+
+    while (not done):
+        c1 = _region_code(x1, y1)
+        c2 = _region_code(x2, y2)
+
+        if (c1 == 0) and (c2 == 0): # line is inside 
+            accept = True
+            done = True
+        elif (c1 & c2) != 0: # completely outside
+            done = True
+        else: # partially inside
+
+            cfora = c1 if c1 else c2
+
+            if (cfora & 1):
+                xint = xmin
+                yint = y1 + (y2-y1) * (xmin - x1)/(x2-x1)
+            elif (cfora & 2):
+                xint = xmax
+                yint = y1 + (y2-y1) * (xmax - x1)/(x2-x1)
+            elif (cfora & 4):
+                yint = ymin
+                xint = x1 + (x2-x1) * (ymin - y1)/(y2-y1)
+            elif (cfora & 8):
+                yint = ymax
+                xint = x1 + (x2-x1) * (ymax - y1)/(y2-y1)
+
+            if (c1 == cfora):
+                x1 = xint
+                y1 = yint
+            else:
+                x2 = xint
+                y2 = yint
+
+    if accept:
+        DDA(screen, round(x1), round(y1), round(x2), round(y2))
+
+    return accept
