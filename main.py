@@ -131,7 +131,8 @@ class Screen():
             - circular Bresenham
         """
         rast_menu = tk.Menu(self.menu, tearoff=0)
-        rast_menu.add_command(label="DDA", command=self.on_dda_click)
+        rast_menu.add_command(label="DDA", 
+                              command=self.on_dda_click)
         rast_menu.add_command(label="Bresenham",
                               command=self.on_bresenham_click)
         rast_menu.add_command(label="Circunferencia - Bresenham",
@@ -172,7 +173,7 @@ class Screen():
         """
         calls the 2d translation transformation algorithm
         """
-        tx, ty = self._popup_menu_vector("Vetor de Translacao, ")
+        tx, ty = self._popup_menu_vector("Distancia de Translacao, ")
         if tx and ty:
             items = self.canvas.find_all()
             translacao(self, items, tx, ty)
@@ -246,7 +247,7 @@ class Screen():
         calls the Cohen-Sutherland algorithm
         """
         # clears the number of clicks, to replace the clipping window if clicked > 2
-        self._clear_count_clicks()  
+        self._clear_count_clicks()
 
         if self._xmin != 0:
             cohen_sutherland(self,
@@ -275,7 +276,7 @@ class Screen():
         """
 
         # to handle wich point (p1 or p2) is clicked
-        self._clicked += 1  
+        self._clicked += 1
         self._count_clk = self._clicked % 2
 
         button = event.num
@@ -285,21 +286,21 @@ class Screen():
 
         _tag = f"rect{self._count_clk}"
 
-        if self._count_clk: 
+        if self._count_clk:
             # point 01 clicked
-            self.canvas.delete(_tag) # deletes the previous point 
+            self.canvas.delete(_tag)  # deletes the previous point
             self._x1 = x
             self._y1 = y
         else:
             # point 02 clicked
-            self.canvas.delete(_tag) # deletes the previous point 
+            self.canvas.delete(_tag)  # deletes the previous point
             self._x2 = x
             self._y2 = y
 
-            if button == 3: # right button click
+            if button == 3:  # right button click
                 self._clipping_window_update()
 
-        draw_pixel(self, x, y, tags=_tag) 
+        draw_pixel(self, x, y, tags=_tag)
         self._update_labels()
 
     def on_clear_button_click(self):

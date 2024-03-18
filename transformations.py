@@ -2,6 +2,12 @@ import math
 
 
 def translacao(screen, items, tx, ty):
+    """
+    2d translation of the items, 
+    screen: screen object
+    items: all items drawn in the screen canvas
+    tx, ty: distance of translation
+    """
 
     for item in items:
         item_coords = screen.canvas.coords(item)
@@ -17,7 +23,12 @@ def translacao(screen, items, tx, ty):
 
 
 def escala(screen, items, sx, sy):
-
+    """
+    Scale of the items, 
+    screen: screen object
+    items: all items drawn in the screen canvas
+    sx, sy: scaling constants 
+    """
     for item in items:
         item_coords = screen.canvas.coords(item)
 
@@ -32,6 +43,12 @@ def escala(screen, items, sx, sy):
 
 
 def rotacao(screen, items, theta):
+    """
+    Rotation of the items, 
+    screen: screen object
+    items: all items drawn in the screen canvas
+    theta: angle of rotation
+    """
 
     theta = math.radians(theta)
 
@@ -56,6 +73,13 @@ def rotacao(screen, items, theta):
 
 
 def reflexao(screen, items, ref_type):
+    """
+    Reflexion of the items, 
+    screen: screen object
+    items: all items drawn in the screen canvas
+    ref_type: type of reflexion (X,Y,XY) 
+    """
+
     for item in items:
         item_coords = screen.canvas.coords(item)
 

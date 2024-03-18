@@ -1,22 +1,5 @@
-from utils import draw_pixel, _plot_circle_points
-
-
 def draw_pixel(screen, x, y, tags="default"):
-    """
-    creates a small rectangle in the x,y coords
-    """
     screen.canvas.create_rectangle(x, y, x+1, y+1, tags=tags)
-
-
-def _plot_circle_points(screen, xc, yc, x, y):
-    draw_pixel(screen, xc+x, yc+y)
-    draw_pixel(screen, xc-x, yc+y)
-    draw_pixel(screen, xc+x, yc-y)
-    draw_pixel(screen, xc-x, yc-y)
-    draw_pixel(screen, xc+y, yc+x)
-    draw_pixel(screen, xc-y, yc+x)
-    draw_pixel(screen, xc+y, yc-x)
-    draw_pixel(screen, xc-y, yc-x)
 
 def DDA(screen, x1, y1, x2, y2):
     dx = int(x2 - x1)
@@ -43,6 +26,16 @@ def DDA(screen, x1, y1, x2, y2):
 
 
 def circ_bresenham(screen, xc, yc, r):
+    
+    def _plot_circle_points(screen, xc, yc, x, y):
+        draw_pixel(screen, xc+x, yc+y)
+        draw_pixel(screen, xc-x, yc+y)
+        draw_pixel(screen, xc+x, yc-y)
+        draw_pixel(screen, xc-x, yc-y)
+        draw_pixel(screen, xc+y, yc+x)
+        draw_pixel(screen, xc-y, yc+x)
+        draw_pixel(screen, xc+y, yc-x)
+        draw_pixel(screen, xc-y, yc-x)
     x = 0
     y = r
     p = 3 - 2*r
