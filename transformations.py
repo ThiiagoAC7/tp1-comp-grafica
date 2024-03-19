@@ -1,4 +1,5 @@
 import math
+from line_drawing import draw
 
 
 def translacao(screen, items, tx, ty):
@@ -10,16 +11,13 @@ def translacao(screen, items, tx, ty):
     """
 
     for item in items:
-        item_coords = screen.canvas.coords(item)
+        _p1 = (item["p1"][0] + tx, item["p1"][1] + ty)
+        _p2 = (item["p2"][0] + tx, item["p2"][1] + ty)
 
-        new_coords = [
-            item_coords[0] + tx,
-            item_coords[1] + ty,
-            item_coords[2] + tx,
-            item_coords[3] + ty,
-        ]
+        item["p1"] = _p1
+        item["p2"] = _p2
 
-        screen.canvas.coords(item, *new_coords)
+        draw(screen, item) # drawing recalculated items
 
 
 def escala(screen, items, sx, sy):
@@ -30,16 +28,15 @@ def escala(screen, items, sx, sy):
     sx, sy: scaling constants 
     """
     for item in items:
-        item_coords = screen.canvas.coords(item)
+        _p1 = (item["p1"][0] * sx, item["p1"][1] * sy)
+        _p2 = (item["p2"][0] * sx, item["p2"][1] * sy)
+        _r = item["r"] * max(sx, sy)
 
-        new_coords = [
-            item_coords[0] * sx,
-            item_coords[1] * sy,
-            item_coords[2] * sx,
-            item_coords[3] * sy,
-        ]
+        item["p1"] = _p1
+        item["p2"] = _p2
+        item["r"] = _r
 
-        screen.canvas.coords(item, *new_coords)
+        draw(screen, item)
 
 
 def rotacao(screen, items, theta):
@@ -53,23 +50,19 @@ def rotacao(screen, items, theta):
     theta = math.radians(theta)
 
     for item in items:
-        item_coords = screen.canvas.coords(item)
-
-        x1 = item_coords[0]
-        y1 = item_coords[1]
-        x2 = item_coords[2]
-        y2 = item_coords[3]
+        x1 = item["p1"][0]
+        y1 = item["p1"][1]
+        x2 = item["p2"][0]
+        y2 = item["p2"][1]
 
         # x' = x.cos(theta) - y.sen(theta)
         # y' = x.sen(theta) + y.cos(theta)
-        new_coords = [
-            x1 * math.cos(theta) - y1 * math.sin(theta),
-            x1 * math.sin(theta) + y1 * math.cos(theta),
-            x2 * math.cos(theta) - y2 * math.sin(theta),
-            x2 * math.sin(theta) + y2 * math.cos(theta),
-        ]
+        item["p1"] = (x1 * math.cos(theta) - y1 * math.sin(theta),
+                      x1 * math.sin(theta) + y1 * math.cos(theta))
+        item["p2"] = (x2 * math.cos(theta) - y2 * math.sin(theta),
+                      x2 * math.sin(theta) + y2 * math.cos(theta))
 
-        screen.canvas.coords(item, *new_coords)
+        draw(screen, item)
 
 
 def reflexao(screen, items, ref_type):
@@ -81,20 +74,16 @@ def reflexao(screen, items, ref_type):
     """
 
     for item in items:
-        item_coords = screen.canvas.coords(item)
-
-        x1 = item_coords[0]
-        y1 = item_coords[1]
-        x2 = item_coords[2]
-        y2 = item_coords[3]
-
-        new_coords = []
+        x1 = item["p1"][0]
+        y1 = item["p1"][1]
+        x2 = item["p2"][0]
+        y2 = item["p2"][1]
 
         if ref_type == "X":
-            new_coords = [x1, -y1, x2, -y2]
+            item["p1"], item["p2"] = (x1, -y1), (x2, -y2)
         elif ref_type == "Y":
-            new_coords = [-x1, y1, -x2, y2]
+            item["p1"], item["p2"] = (-x1, y1), (-x2, y2)
         else:
-            new_coords = [-x1, -y1, -x2, -y2]
+            item["p1"], item["p2"] = (-x1, -y1), (-x2, -y2)
 
-        screen.canvas.coords(item, *new_coords)
+        draw(screen, item)

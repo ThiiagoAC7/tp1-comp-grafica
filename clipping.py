@@ -1,7 +1,22 @@
 from line_drawing import DDA
 
 
-def cohen_sutherland(screen, xmin, ymin, xmax, ymax, x1, y1, x2, y2):
+def clip(screen, items, clip_type, xmin, ymin, xmax, ymax):
+    """
+    calls the clipping algorithms according to clip_type
+    """
+    for item in items:
+        if clip_type == "cohen_sutherland":
+            cohen_sutherland(screen,
+                             xmin, ymin, xmax, ymax,
+                             item)
+        else:
+            liang_barsky(screen,
+                         xmin, ymin, xmax, ymax,
+                         item)
+
+
+def cohen_sutherland(screen, xmin, ymin, xmax, ymax, item):
 
     def _region_code(x, y):
         code = 0
@@ -21,6 +36,10 @@ def cohen_sutherland(screen, xmin, ymin, xmax, ymax, x1, y1, x2, y2):
         return code
 
     accept = done = False
+    xint = yint = 0
+
+    x1, y1 = item["p1"]
+    x2, y2 = item["p2"]
 
     while (not done):
         c1 = _region_code(x1, y1)
@@ -51,16 +70,18 @@ def cohen_sutherland(screen, xmin, ymin, xmax, ymax, x1, y1, x2, y2):
             if (c1 == cfora):
                 x1 = xint
                 y1 = yint
+                item["p1"] = (x1, y1)
             else:
                 x2 = xint
                 y2 = yint
+                item["p2"] = (x2, y2)
 
     if accept:
-        DDA(screen, round(x1), round(y1), round(x2), round(y2))
+        DDA(screen, item)
     return accept
 
 
-def liang_barsky(screen, xmin, ymin, xmax, ymax, x1, y1, x2, y2):
+def liang_barsky(screen, xmin, ymin, xmax, ymax, item):
 
     def _cliptest(p, q, u1, u2):
         result = True
@@ -81,6 +102,9 @@ def liang_barsky(screen, xmin, ymin, xmax, ymax, x1, y1, x2, y2):
             result = False
 
         return result, u1, u2
+
+    x1, y1 = item["p1"]
+    x2, y2 = item["p2"]
 
     u1 = 0
     u2 = 1
@@ -104,8 +128,12 @@ def liang_barsky(screen, xmin, ymin, xmax, ymax, x1, y1, x2, y2):
         if u2 < 1:
             x2 = x1 + u2 * dx
             y2 = y1 + u2 * dy
+
+            item["p2"] = (x2, y2)
         if u1 > 0:
             x1 = x1 + u1 * dx
             y1 = y1 + u1 * dy
 
-        DDA(screen, round(x1), round(y1), round(x2), round(y2))
+            item["p1"] = (x1, y1)
+
+        DDA(screen, item)

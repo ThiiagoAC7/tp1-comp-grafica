@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import simpledialog, messagebox
 from line_drawing import DDA, bresenham, circ_bresenham, draw_pixel
 from transformations import translacao, escala, rotacao, reflexao
-from clipping import cohen_sutherland, liang_barsky
+from clipping import clip 
 
 
 class Screen():
@@ -22,6 +22,9 @@ class Screen():
         self._y2 = 0
         self._clicked = 0
         self._count_clk = self._clicked % 2
+
+        # list of dicts,each is a objects drawn
+        self.objects = [] # {id, type, point 1, point 2, radius}
 
         self.root = tk.Tk()
         self.menu = tk.Menu(self.root)
@@ -131,7 +134,7 @@ class Screen():
             - circular Bresenham
         """
         rast_menu = tk.Menu(self.menu, tearoff=0)
-        rast_menu.add_command(label="DDA", 
+        rast_menu.add_command(label="DDA",
                               command=self.on_dda_click)
         rast_menu.add_command(label="Bresenham",
                               command=self.on_bresenham_click)
@@ -175,8 +178,8 @@ class Screen():
         """
         tx, ty = self._popup_menu_vector("Distancia de Translacao, ")
         if tx and ty:
-            items = self.canvas.find_all()
-            translacao(self, items, tx, ty)
+            self.canvas.delete("all")
+            translacao(self, self.objects,  tx, ty)
 
     def on_rotation_click(self):
         """
@@ -184,8 +187,8 @@ class Screen():
         """
         theta = self._popup_menu_int("Valor do Angulo theta: ")
         if theta:
-            items = self.canvas.find_all()
-            rotacao(self, items, theta)
+            self.canvas.delete("all")
+            rotacao(self, self.objects, theta)
 
     def on_scale_click(self):
         """
@@ -193,17 +196,18 @@ class Screen():
         """
         sx, sy = self._popup_menu_vector("Constantes de Escala, ")
         if sx and sy:
-            items = self.canvas.find_all()
-            escala(self, items, sx, sy)
+            self.canvas.delete("all")
+            escala(self, self.objects, sx, sy)
 
     def on_reflexion_click(self):
         """
         calls the 2d reflexion transformation algorithm
         """
+
         ref_type = self._popup_menu("Reflexao X, Y, XY:")
         if ref_type in ["X", "Y", "XY"]:
-            items = self.canvas.find_all()
-            reflexao(self, items, ref_type)
+            self.canvas.delete("all")
+            reflexao(self, self.objects, ref_type)
         else:
             self._popup_warning("Digite X, Y ou XY")
 
@@ -212,7 +216,10 @@ class Screen():
         calls the DDA line drawing algorithm
         """
         if self._x1 != 0 and self._x2 != 0:
-            DDA(self, self._x1, self._y1, self._x2, self._y2)
+            _item = self._add_object("dda",
+                                     (self._x1, self._y1),
+                                     (self._x2, self._y2))
+            DDA(self, _item)
         else:
             self._popup_warning("Selecione 02 pontos no Canvas")
 
@@ -221,7 +228,10 @@ class Screen():
         calls the bresenham line drawing algorithm
         """
         if self._x1 != 0 and self._x2 != 0:
-            bresenham(self, self._x1, self._y1, self._x2, self._y2)
+            _item = self._add_object("bresenham",
+                                     (self._x1, self._y1),
+                                     (self._x2, self._y2))
+            bresenham(self, _item)
         else:
             self._popup_warning("Selecione 02 pontos no Canvas")
 
@@ -234,13 +244,10 @@ class Screen():
         else:
             r = self._popup_menu_int("Valor do Raio :")
 
-            if self._count_clk:
-                circ_bresenham(self, self._x1, self._y1, r)
-            else:
-                circ_bresenham(self, self._x2, self._y2, r)
+            _p1 = (self._x1, self._y1) if self._count_clk else (self._x2, self._y2)
+            _item = self._add_object("circ_bresenham", _p1, (0, 0), r)
 
-            # deletes the center point of the circle
-            self.canvas.delete(f"rect{self._clicked % 2}")
+            circ_bresenham(self, _item)
 
     def on_cohen_sutherland_click(self):
         """
@@ -250,9 +257,11 @@ class Screen():
         self._clear_count_clicks()
 
         if self._xmin != 0:
-            cohen_sutherland(self,
-                             self._xmin, self._ymin, self._xmax, self._ymax,
-                             self._x1, self._y1, self._x2, self._y2)
+            self.canvas.delete("default")
+            clip(self,
+                 self.objects,
+                 "cohen_sutherland",
+                 self._xmin, self._ymin, self._xmax, self._ymax)
         else:
             self._popup_warning("Selecione a janela de recorte com o botao direito")
 
@@ -264,9 +273,11 @@ class Screen():
         self._clear_count_clicks()
 
         if self._xmin != 0:
-            liang_barsky(self,
-                         self._xmin, self._ymin, self._xmax, self._ymax,
-                         self._x1, self._y1, self._x2, self._y2)
+            self.canvas.delete("default")
+            clip(self,
+                 self.objects,
+                 "liang_barsky",
+                 self._xmin, self._ymin, self._xmax, self._ymax)
         else:
             self._popup_warning("Selecione a janela de recorte com o botao direito")
 
@@ -293,7 +304,7 @@ class Screen():
             self._y1 = y
         else:
             # point 02 clicked
-            self.canvas.delete(_tag)  # deletes the previous point
+            self.canvas.delete(_tag) 
             self._x2 = x
             self._y2 = y
 
@@ -312,6 +323,7 @@ class Screen():
         self._clear_pmax_pmin()
         self._clear_count_clicks()
         self._update_labels()
+        self.objects = []
         self.canvas.delete("all")
 
     def _clear_p1_p2(self):
@@ -342,7 +354,7 @@ class Screen():
     def _popup_menu(self, title="Valor :"):
         return simpledialog.askstring("Input", title)
 
-    def _popup_menu_int(self, title="Valor :"):
+    def _popup_menu_int(self, title="Valor :") -> int:
         return simpledialog.askinteger("Input", title)
 
     def _popup_menu_vector(self, title=""):
@@ -369,10 +381,8 @@ class Screen():
     def _update_labels(self):
         self.label_x1.config(text=f"x1, y1: ({self._x1}, {self._y1})")
         self.label_x2.config(text=f"x2, y2: ({self._x2}, {self._y2})")
-        self.label_xmin.config(
-            text=f"xmin, ymin: ({self._xmin}, {self._ymin})")
-        self.label_xmax.config(
-            text=f"xmax, ymax: ({self._xmax}, {self._ymax})")
+        self.label_xmin.config(text=f"xmin, ymin: ({self._xmin}, {self._ymin})")
+        self.label_xmax.config(text=f"xmax, ymax: ({self._xmax}, {self._ymax})")
 
     def _clipping_window_update(self):
         """
@@ -395,6 +405,19 @@ class Screen():
 
         self._clear_p1_p2()
 
+    def _add_object(self, item_type, p1, p2, radius=0):
+        item_id = len(self.objects) + 1
+
+        item = {
+            "id": item_id,
+            "type": item_type,
+            "p1": p1,
+            "p2": p2, # (0,0) if type != circ_bresenham
+            "r": radius # 0 if type != circ_bresenham
+        }
+
+        self.objects.append(item)
+        return item
 
 if __name__ == "__main__":
     screen = Screen()

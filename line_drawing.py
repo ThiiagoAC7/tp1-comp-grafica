@@ -1,7 +1,23 @@
 def draw_pixel(screen, x, y, tags="default"):
     screen.canvas.create_rectangle(x, y, x+1, y+1, tags=tags)
 
-def DDA(screen, x1, y1, x2, y2):
+
+def draw(screen, item):
+    """
+    calls the drawing functions according to item type
+    """
+    print(item)
+    if item["type"] == "circ_bresenham":
+        circ_bresenham(screen, item)
+    else:
+        DDA(screen, item)
+
+
+def DDA(screen, item):
+
+    x1, y1 = item["p1"]
+    x2, y2 = item["p2"]
+
     dx = int(x2 - x1)
     dy = int(y2 - y1)
 
@@ -25,8 +41,8 @@ def DDA(screen, x1, y1, x2, y2):
         draw_pixel(screen, x, y)
 
 
-def circ_bresenham(screen, xc, yc, r):
-    
+def circ_bresenham(screen, item):
+
     def _plot_circle_points(screen, xc, yc, x, y):
         draw_pixel(screen, xc+x, yc+y)
         draw_pixel(screen, xc-x, yc+y)
@@ -36,6 +52,11 @@ def circ_bresenham(screen, xc, yc, r):
         draw_pixel(screen, xc-y, yc+x)
         draw_pixel(screen, xc+y, yc-x)
         draw_pixel(screen, xc-y, yc-x)
+
+    xc, yc = item["p1"]
+
+    r = item["r"]
+
     x = 0
     y = r
     p = 3 - 2*r
@@ -52,7 +73,11 @@ def circ_bresenham(screen, xc, yc, r):
         _plot_circle_points(screen, xc, yc, x, y)
 
 
-def bresenham(screen, x1, y1, x2, y2):
+def bresenham(screen, item):
+
+    x1, y1 = item["p1"]
+    x2, y2 = item["p2"]
+
     dx = int(x2 - x1)
     dy = int(y2 - y1)
 
@@ -88,9 +113,9 @@ def bresenham(screen, x1, y1, x2, y2):
 
             draw_pixel(screen, x, y)
     else:
-        p = 2*dx - dy
-        c1 = 2*dx
-        c2 = 2*(dx - dy)
+        p = 2 * dx - dy
+        c1 = 2 * dx
+        c2 = 2 * (dx - dy)
 
         for _ in range(dy):
             y += incry

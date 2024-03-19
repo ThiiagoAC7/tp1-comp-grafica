@@ -20,13 +20,23 @@ e inicia nas coordenadas ++.
 A UI é configurada na classe Screen, no arquivo main.py. Essa classe é responsável pela 
 construção dos elementos de UI, handlers de eventos e cliques.
 
+Aqui também é mantida uma lista contendo todos os itens desenhados. 
+Essa lista é composta por uma id, tipo do item (dependendo de qual algoritmo 
+de desenho foi aplicado, DDA, Bresenham ou Circunferência-Bresenham), ponto 1,
+ponto 2 e raio. No caso dos algoritmos de linha (DDA e Bresenham), o raio é 
+setado como 0, e os pontos 1 e 2 como os respectivos pontos X e Y escolhidos pelo 
+usuário. No caso do Circunferência-Bresenham, somente o ponto 01 é considerado, para 
+ser o centro do circulo, e o raio é escolhido pelo usuário.
+
+
 ### Transformation
 
 Algoritmos de Transformações 2D (Translação, Escala, Rotação, Reflexção)
-, chamados pelo respectivo menu na UI.
+, chamados pelo respectivo menu na UI. Todos os algoritmos são aplicados em cima da 
+estrutura de dados descrita anteriormente, que mantém uma lista de todos os itens desenhados.
 
 Na Translação, o usuário escolhe os valores que os objetos desenhados irão mover em
-X e Y, somando esses valores nos pontos desenhados no Canvas
+X e Y, somando esses valores nos pontos desenhados no Canvas 
 
 Na Escala, o usuário escolhe os valores que os objetos desenhados irão escalar, 
 multiplicando esses valores nos pontos desenhados no Canvas
@@ -49,6 +59,9 @@ Caso não houver, uma mensagem de aviso é mostrada. Depois disso, os respectivo
 (DDA, Bresenham, Circunferência-Bresenham). No caso da Circunferência, apenas um ponto é necessário,
 e o usuário precisa de informar o raio do circulo.
 
+Antes da execução dos algoritmos, a lista de itens descrita anteriormente é atualizada,
+para manter o novo objeto em memória.
+
 Os algoritmos são os mesmos mostrados nos slides da disciplina.
 
 
@@ -61,13 +74,23 @@ Ao selecionar as opções no menu, primeiro é verificado se existe uma janela d
 que deve ser selecionada com o botão direito. Caso exista, chama o respectivo algoritmo com 
 os pontos 1 e 2 selecionados no canvas, sempre com 02 pontos por vez.
 
-Os algoritmos são os mesmos mostrados nos slides da disciplina
+Os algoritmos são os mesmos mostrados nos slides da disciplina, e são aplicados
+em cima da lista de itens desenhados na tela.
 
 ## Como Usar: 
 
-***Requerimentos*** : python v >= 3.9, tkinter, math
+***Requerimentos*** : git, python v >= 3.9, tkinter, math
 
 ***Modo de Execução***:
+
+- clone o repositório (ou baixe como zip)
+
+```
+git clone git@github.com:ThiiagoAC7/tp1-comp-grafica.git
+ou 
+git clone https://github.com/ThiiagoAC7/tp1-comp-grafica.git
+```
+- no repositório, execute o arquivo main.py
 ```
 python main.py
 ```
@@ -104,14 +127,14 @@ uma linha caso DDA ou Bresenham sejam selecionados no menu.
     ![reflexão no objeto](./screenshots/objeto_reflexao.png) 
         *Exemplo : Reflexão XY no objeto*
 
-3. Com um Canvas limpo, aplique os algoritmos de Recorte:
-    - Limpe o canvas
-    - Selecione com o botão direito a janela de recorte
-    - após desenhar a janela (em vermelho), selecione 02 pontos na tela 
-    (totalmente dentro da janela, totalmente fora ou parcialmente dentro)
-    - selecione no menu o algoritmo a ser aplicado (Liang-Barsky ou Cohen-Sutherland)
+3. Aplique os algoritmos de Recorte:
+    - Desenhe objetos na tela, com DDA ou Bresenham 
+    - Com o botão direito, selecione os pontos min e max, responsáveis
+    pela janela de recorte. (retangulo em vermelho)
+    - No menu recorte, selecione o algoritmo desejado (Cohen-Sutherland ou 
+    Liang-Barsky)
+    - Repita o processo caso desejar (mudando a janela de recorte ou não)
     - Exemplo:
 
-    ![recorte](./screenshots/recorte.png) 
-    *Algoritmos de recorte aplicados na janela*
-    
+    ![recorte nos objetos](./screenshots/recorte.png) 
+        *Exemplo : Recorte nos objetos*
